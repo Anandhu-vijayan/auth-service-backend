@@ -1,6 +1,6 @@
-const { z } = require("zod");
+import { z } from "zod";
 
-const requestOTPSchema = z
+const registerValidation = z
   .object({
     name: z
       .string()
@@ -24,4 +24,4 @@ const requestOTPSchema = z
     path: ["confirmPassword"],
   });
 
-module.exports = { requestOTPSchema };
+export { registerValidation };

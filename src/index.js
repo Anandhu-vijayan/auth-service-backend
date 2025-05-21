@@ -1,51 +1,52 @@
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
-const rateLimit = require("express-rate-limit");
+import dotenv from 'dotenv';
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
-const connectDB = require("./config/db");
-const redis = require("./config/redis");
-const authRoutes = require("./routes/v1/auth.route");
-const errorMiddleware = require("./middlewares/errorMiddleware");
+import connectDB from '../config/database.js'; // This now imports the function
+import redis from '../config/redis.js';
+// import authRoutes from './routes/v1/auth.route.js'; // Comment out
+// import errorMiddleware from './middlewares/errorMiddleware.js'; // Keep for now, but watch
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Security middlewares
+// Security middlewares - Keep these as they are not route related
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 min
-  max: 100, // limit each IP to 100 requests per windowMs
-});
-app.use("/api", limiter);
+// Rate limiting - COMMENT OUT TEMPORARILY
+// const limiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 min
+//   max: 100,
+// });
+// app.use("/api", limiter);
 
-// Health check route
-app.get("/health", (req, res) => {
-  res.status(200).json({ status: "Auth service is healthy" });
-});
+// Health check - COMMENT OUT TEMPORARILY
+// app.get("/health", (req, res) => {
+//   res.status(200).json({ status: "Auth service is healthy" });
+// });
 
-// Versioned API routing
-app.use("/api/v1/auth", authRoutes);
+// Routes - COMMENT OUT ALL OF THESE
+// app.use("/api/v1/auth", authRoutes);
 
-// Fallback for undefined routes
-app.all("*", (req, res) => {
-  res.status(404).json({ message: "Route not found" });
-});
+// Fallback - COMMENT OUT TEMPORARILY
+// app.all("*", (req, res) => {
+//   res.status(404).json({ message: "Route not found" });
+// });
 
-// Global error handler
-app.use(errorMiddleware);
+// Global error handler - COMMENT OUT TEMPORARILY IF THE ERROR PERSISTS
+// app.use(errorMiddleware); // You might want to try commenting this out too if the error remains after other steps
 
-// Start server after DB connect
 const startServer = async () => {
   try {
     await connectDB();
-    redis.connect?.(); // Optional: If using connect() explicitly
+    redis.connect?.();
 
     app.listen(PORT, () => {
       console.log(`Auth service running on http://localhost:${PORT}`);

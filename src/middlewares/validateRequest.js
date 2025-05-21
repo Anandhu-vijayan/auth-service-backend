@@ -8,7 +8,7 @@ const validateRequest = (schema) => {
       if (error.errors && Array.isArray(error.errors)) {
         // Return the first validation error message
         return res.status(400).json({
-          success: false,   
+          success: false,
           message: "Validation failed",
           errors: error.errors.map((err) => ({
             field: err.path.join('.'),
@@ -26,4 +26,4 @@ const validateRequest = (schema) => {
   };
 };
 
-module.exports = validateRequest;
+export default validateRequest;
