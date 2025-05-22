@@ -1,5 +1,5 @@
 import redis from '../../config/redis.config.js';
-import { User } from '../../database/models/user.model.js'; // Adjust if needed
+import { User, Role } from '../../database/models/index.js';
 // import { register } from './auth.register.js'; // Assuming register is moved to its own module
 
 export const verifyEmail = async (req, res) => {

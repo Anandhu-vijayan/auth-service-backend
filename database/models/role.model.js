@@ -1,18 +1,20 @@
-// role.model.js
-export const Role = (sequelize, DataTypes) => {
-  const RoleModel = sequelize.define('Role', {
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false,
+export default (sequelize, DataTypes) => {
+  const Role = sequelize.define('Role', {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
     },
-  });
-
-  RoleModel.associate = (models) => {
-    RoleModel.belongsToMany(models.Permission, {
-      through: 'role_permissions',
-      foreignKey: 'roleId',
+    name: { type: DataTypes.STRING, allowNull: false, unique: true },
+  },
+{
+      tableName: 'roles', // <-- this line fixes the table name!
     });
+
+
+  Role.associate = (models) => {
+    Role.hasMany(models.User, { foreignKey: 'roleId', as: 'users' });
   };
 
-  return RoleModel;
+  return Role;
 };
