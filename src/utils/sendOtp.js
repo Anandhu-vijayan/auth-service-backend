@@ -1,4 +1,4 @@
-import redis from '../../config/redis.js';
+import redis from '../../config/redis.config.js';
 import sendMail from './auth.mailer.js';
 
 const sendOTP = async (email) => {

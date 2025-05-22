@@ -1,4 +1,4 @@
-import redis from '../../config/redis.js';
+import redis from '../../config/redis.config.js';
 import { User } from '../../database/models/user.model.js'; // Adjust if needed
 // import { register } from './auth.register.js'; // Assuming register is moved to its own module
 
