@@ -1,12 +1,12 @@
 import bcrypt from 'bcrypt';
 import sendOTP from '../utils/sendOtp.js';
-// import { User } from '../../database/models/user.model.js';
-// import { Role } from '../../database/models/role.model.js';
 import { User, Role } from '../../database/models/index.js';
 
 export const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+
+    // Find existing user by email
     const existingUser = await User.findOne({ where: { email } });
 
     if (existingUser) {
@@ -15,15 +15,28 @@ export const register = async (req, res) => {
           .status(409)
           .json({ message: 'Email already registered and verified' });
       } else {
-        return res.status(400).json({
-          message:
-            'Email already registered but not verified. Please verify your email.',
+        // Update the unverified user instead of creating a new one
+        const hashedPassword = await bcrypt.hash(password, 10);
+        existingUser.name = name;
+        existingUser.passwordHash = hashedPassword;
+        await existingUser.save();
+
+        await sendOTP(email);
+
+        return res.status(200).json({
+          message: 'User updated successfully. OTP sent to email.',
+          data: {
+            id: existingUser.id,
+            name: existingUser.name,
+            email: existingUser.email,
+            role: (await existingUser.getRole())?.name || 'user',
+          },
         });
       }
     }
 
+    // No user exists, create new
     const hashedPassword = await bcrypt.hash(password, 10);
-    console.log(hashedPassword);
     const userRole = await Role.findOne({ where: { name: 'user' } });
 
     const newUser = await User.create({
@@ -45,6 +58,10 @@ export const register = async (req, res) => {
       },
     });
   } catch (err) {
+    // If error is a unique constraint error, handle gracefully
+    if (err.name === 'SequelizeUniqueConstraintError') {
+      return res.status(409).json({ message: 'Email already registered' });
+    }
     console.error('Register error:', err);
     return res.status(500).json({ message: 'Internal server error' });
   }
