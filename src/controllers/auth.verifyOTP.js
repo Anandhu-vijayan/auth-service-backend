@@ -2,11 +2,13 @@ import redis from '../../config/redis.config.js';
 import { User, Role } from '../../database/models/index.js';
 // import { register } from './auth.register.js'; // Assuming register is moved to its own module
 
-export const verifyEmail = async (req, res) => {
+export const verifyOTP = async (req, res) => {
   const { email, otp } = req.body;
 
   try {
     const storedOtp = await redis.get(`otp:${email}`);
+    console.log(`Stored OTP for ${email}:`, storedOtp);
+    console.log(`Provided OTP for ${email}:`, otp);
 
     if (!storedOtp || storedOtp !== otp) {
       return res.status(400).json({ message: 'Invalid or expired OTP' });
