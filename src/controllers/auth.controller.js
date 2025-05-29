@@ -13,7 +13,7 @@ export const register = async (req, res) => {
       if (existingUser.isVerified) {
         return res
           .status(409)
-          .json({ message: 'Email already registered and verified' });
+          .json({ message: 'Email already registered' });
       } else {
         // Update the unverified user instead of creating a new one
         const hashedPassword = await bcrypt.hash(password, 10);

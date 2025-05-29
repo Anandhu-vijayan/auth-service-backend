@@ -7,8 +7,6 @@ export const verifyOTP = async (req, res) => {
 
   try {
     const storedOtp = await redis.get(`otp:${email}`);
-    console.log(`Stored OTP for ${email}:`, storedOtp);
-    console.log(`Provided OTP for ${email}:`, otp);
 
     if (!storedOtp || storedOtp !== otp) {
       return res.status(400).json({ message: 'Invalid or expired OTP' });
