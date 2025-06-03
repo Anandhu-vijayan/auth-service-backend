@@ -8,7 +8,7 @@ import rateLimit from 'express-rate-limit';
 import connectDB from '../config/database.config.js';
 import redis from '../config/redis.config.js';
 import authRoutes from './routes/v1/auth.route.js'; // Check this path!
-import errorMiddleware from './middlewares/errorMiddleware.js';
+import errorMiddleware from './middlewares/errorHandler.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
