@@ -2,15 +2,14 @@ import { User } from "../../database/models/index.js";
 import bcrypt from "bcrypt";
 import { Role } from "../../database/models/index.js";
 import sendOTP from "../utils/sendOtp.js";
+import httpError from '../utils/httpError.js';
 
 export async function registerUser({ email, password, name }) {
   const existingUser = await User.findOne({ where: { email } });
   // Check if user already exists
   if (existingUser) {
     if (existingUser.isVerified) {
-      const err = new Error("Email already registered");
-      err.status = 409;
-      throw err;
+      throw httpError(409, "Email already registered");
     } else {
       // Update the unverified user instead of creating a new one
       const hashedPassword = await bcrypt.hash(password, 10);

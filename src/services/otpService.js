@@ -1,45 +1,35 @@
 import sendOTP from "../utils/sendOtp.js";
-
-export const authResendOTP = async ({email}) => {
-  if (!email) return res.status(400).json({ message: 'Email is required' });
+import httpError from "../utils/httpError.js";
+import { User } from "../../database/models/index.js";
+import generateTokens from "../utils/generateTokens.js"; // however you do it
+import redis from "../../config/redis.config.js"; 
+export const authResendOTP = async ({ email }) => {
+  if (!email) throw httpError(409, "Email is required");
   try {
     await sendOTP(email);
-    return { message: 'OTP resent successfully' };
+    return { message: "OTP resent successfully" };
   } catch (err) {
-    // console.error('Resend OTP error:', err);
-    return { message: 'Internal server error' }
+    throw httpError(500, "Internal server error");
   }
-}
+};
 
-export const authVerifyOTP = async ({email, otp}) => {
-  if (!email || !otp) {
-    return res.status(400).json({ message: 'Email and OTP are required' });
-  }
+export const authVerifyOTP = async ({ email, otp }) => {
+  if (!email || !otp) throw httpError(400, "Email and OTP are required");
 
-  // Validate email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return res.status(400).json({ message: 'Invalid email format' });
-  }
+  if (!emailRegex.test(email)) throw httpError(400, "Invalid email format");
 
-  // Validate OTP format (6 digits)
   const otpRegex = /^\d{6}$/;
-  if (!otpRegex.test(otp)) {
-    return res.status(400).json({ message: 'Invalid OTP format' });
-  }
+  if (!otpRegex.test(otp)) throw httpError(400, "Invalid OTP format");
 
-  // Check if OTP exists in Redis
-try {
+  try {
     const storedOtp = await redis.get(`otp:${email}`);
-    if (!storedOtp || storedOtp !== otp) {
-      return res.status(400).json({ message: 'Invalid or expired OTP' });
-    }
+    if (!storedOtp || storedOtp !== otp)
+      throw httpError(400, "Invalid or expired OTP");
 
     const user = await User.findOne({ where: { email } });
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    if (user.isVerified) {
-      return res.status(400).json({ message: 'Email already verified' });
-    }
+    if (!user) throw httpError(404, "User not found");
+    if (user.isVerified) throw httpError(400, "Email already verified");
 
     user.isVerified = true;
     await user.save();
@@ -48,33 +38,21 @@ try {
     // Generate tokens
     const { accessToken, refreshToken } = generateTokens(user);
 
-    // (Optional) Store refreshToken in DB for revocation, or just rely on JWT signature
-
-    // Set tokens in HTTP-only, secure cookies
-    res.cookie('access_token', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 1000 * 60 * 15, // 15 minutes
-    });
-    res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-    });
-
-    return res.status(200).json({
-      message: 'Email verified successfully',
+    return {
+      message: "Email verified successfully",
       data: {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: (await user.getRole())?.name || 'user',
+        role: (await user.getRole())?.name || "user",
       },
-    });
+      tokens: { accessToken, refreshToken },
+    };
   } catch (err) {
-    console.error('OTP verification error:', err);
-    return res.status(500).json({ message: 'Internal server error' });
+    console.error("authVerifyOTP error:", err); // <--- add this!
+
+    // If already an httpError, re-throw
+    if (err.status) throw err;
+    throw httpError(500, "Internal server error");
   }
-}
+};
